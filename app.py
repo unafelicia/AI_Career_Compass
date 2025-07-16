@@ -156,49 +156,175 @@ PREDEFINED_SKILLS = [
     "Web Scraping", "Data Mining", "Big Data", "Cloud Computing", "MLOps"
 ]
 
-# 学习资源链接
+# 分级学习资源链接
 LEARNING_RESOURCES = {
-    "Python": [
-        {"name": "Python官方教程", "url": "https://docs.python.org/3/tutorial/", "type": "文档"},
-        {"name": "Automate the Boring Stuff", "url": "https://automatetheboringstuff.com/", "type": "在线书籍"},
-        {"name": "Python for Everybody (Coursera)", "url": "https://www.coursera.org/specializations/python",
-         "type": "课程"}
-    ],
-    "Machine Learning": [
-        {"name": "Andrew Ng ML Course", "url": "https://www.coursera.org/learn/machine-learning", "type": "课程"},
-        {"name": "Scikit-learn Documentation", "url": "https://scikit-learn.org/stable/user_guide.html",
-         "type": "文档"},
-        {"name": "Hands-On ML Book", "url": "https://github.com/ageron/handson-ml2", "type": "GitHub"}
-    ],
-    "Deep Learning": [
-        {"name": "Deep Learning Specialization", "url": "https://www.coursera.org/specializations/deep-learning",
-         "type": "课程"},
-        {"name": "PyTorch Tutorials", "url": "https://pytorch.org/tutorials/", "type": "文档"},
-        {"name": "TensorFlow Tutorials", "url": "https://www.tensorflow.org/tutorials", "type": "文档"}
-    ],
-    "SQL": [
-        {"name": "SQLBolt Interactive Tutorial", "url": "https://sqlbolt.com/", "type": "互动教程"},
-        {"name": "W3Schools SQL Tutorial", "url": "https://www.w3schools.com/sql/", "type": "教程"},
-        {"name": "PostgreSQL Tutorial", "url": "https://www.postgresqltutorial.com/", "type": "教程"}
-    ],
-    "Data Analysis": [
-        {"name": "Pandas Documentation", "url": "https://pandas.pydata.org/docs/user_guide/index.html", "type": "文档"},
-        {"name": "Data Analysis with Python", "url": "https://www.coursera.org/learn/data-analysis-with-python",
-         "type": "课程"},
-        {"name": "Kaggle Learn", "url": "https://www.kaggle.com/learn", "type": "实战平台"}
-    ],
-    "Cloud Computing": [
-        {"name": "AWS Training", "url": "https://aws.amazon.com/training/", "type": "官方培训"},
-        {"name": "Azure Learning Path", "url": "https://docs.microsoft.com/en-us/learn/azure/", "type": "学习路径"},
-        {"name": "GCP Training", "url": "https://cloud.google.com/training", "type": "官方培训"}
-    ],
-    "MLOps": [
-        {"name": "MLOps Specialization",
-         "url": "https://www.coursera.org/specializations/machine-learning-engineering-for-production-mlops",
-         "type": "课程"},
-        {"name": "MLflow Documentation", "url": "https://mlflow.org/docs/latest/index.html", "type": "文档"},
-        {"name": "Kubeflow Tutorials", "url": "https://www.kubeflow.org/docs/started/getting-started/", "type": "教程"}
-    ]
+    "Python": {
+        "beginner": [
+            {"name": "Python官方教程", "url": "https://docs.python.org/3/tutorial/", "type": "文档"},
+            {"name": "Automate the Boring Stuff", "url": "https://automatetheboringstuff.com/", "type": "在线书籍"},
+            {"name": "Python for Everybody (Coursera)", "url": "https://www.coursera.org/specializations/python",
+             "type": "课程"}
+        ],
+        "intermediate": [
+            {"name": "Real Python Advanced Tutorials", "url": "https://realpython.com/tutorials/advanced/",
+             "type": "教程"},
+            {"name": "Python Tricks Book", "url": "https://realpython.com/python-tricks/", "type": "进阶书籍"},
+            {"name": "Advanced Python Programming",
+             "url": "https://www.udemy.com/course/python-beyond-the-basics-object-oriented-programming/",
+             "type": "课程"}
+        ],
+        "advanced": [
+            {"name": "Python Internals", "url": "https://github.com/python/cpython/tree/main/Doc", "type": "源码研究"},
+            {"name": "High Performance Python",
+             "url": "https://www.oreilly.com/library/view/high-performance-python/9781492055013/",
+             "type": "专家级书籍"},
+            {"name": "Python C API", "url": "https://docs.python.org/3/extending/", "type": "扩展开发"}
+        ]
+    },
+    "Machine Learning": {
+        "beginner": [
+            {"name": "Andrew Ng ML Course", "url": "https://www.coursera.org/learn/machine-learning", "type": "课程"},
+            {"name": "Scikit-learn User Guide", "url": "https://scikit-learn.org/stable/user_guide.html",
+             "type": "文档"},
+            {"name": "Kaggle Learn ML", "url": "https://www.kaggle.com/learn/intro-to-machine-learning",
+             "type": "实战教程"}
+        ],
+        "intermediate": [
+            {"name": "Hands-On ML with Scikit-Learn", "url": "https://github.com/ageron/handson-ml2",
+             "type": "实战项目"},
+            {"name": "Feature Engineering Course", "url": "https://www.coursera.org/learn/feature-engineering",
+             "type": "专业课程"},
+            {"name": "ML Engineering for Production",
+             "url": "https://www.coursera.org/specializations/machine-learning-engineering-for-production-mlops",
+             "type": "工程实践"}
+        ],
+        "advanced": [
+            {"name": "Advanced ML Specialization", "url": "https://www.coursera.org/specializations/aml",
+             "type": "高级专业化"},
+            {"name": "ML Research Papers", "url": "https://paperswithcode.com/", "type": "前沿研究"},
+            {"name": "Custom ML Algorithms", "url": "https://github.com/rushter/MLAlgorithms", "type": "算法实现"}
+        ]
+    },
+    "Deep Learning": {
+        "beginner": [
+            {"name": "Deep Learning Specialization", "url": "https://www.coursera.org/specializations/deep-learning",
+             "type": "课程"},
+            {"name": "PyTorch Tutorials", "url": "https://pytorch.org/tutorials/", "type": "文档"},
+            {"name": "Fast.ai Practical DL", "url": "https://course.fast.ai/", "type": "实用课程"}
+        ],
+        "intermediate": [
+            {"name": "Advanced PyTorch", "url": "https://pytorch.org/tutorials/intermediate/", "type": "进阶教程"},
+            {"name": "CS231n Stanford", "url": "http://cs231n.stanford.edu/", "type": "学术课程"},
+            {"name": "Deep Learning Book", "url": "https://www.deeplearningbook.org/", "type": "理论基础"}
+        ],
+        "advanced": [
+            {"name": "Transformer Architecture",
+             "url": "https://papers.nips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf",
+             "type": "论文研究"},
+            {"name": "Advanced GAN Techniques", "url": "https://github.com/eriklindernoren/PyTorch-GAN",
+             "type": "前沿实现"},
+            {"name": "Neural Architecture Search", "url": "https://arxiv.org/abs/1808.05377", "type": "研究前沿"}
+        ]
+    },
+    "SQL": {
+        "beginner": [
+            {"name": "SQLBolt Interactive", "url": "https://sqlbolt.com/", "type": "互动教程"},
+            {"name": "W3Schools SQL", "url": "https://www.w3schools.com/sql/", "type": "基础教程"},
+            {"name": "SQL for Data Science", "url": "https://www.coursera.org/learn/sql-for-data-science",
+             "type": "课程"}
+        ],
+        "intermediate": [
+            {"name": "Advanced SQL Techniques", "url": "https://mode.com/sql-tutorial/advanced/", "type": "进阶教程"},
+            {"name": "SQL Performance Tuning", "url": "https://use-the-index-luke.com/", "type": "性能优化"},
+            {"name": "Window Functions Deep Dive",
+             "url": "https://www.postgresql.org/docs/current/tutorial-window.html", "type": "专题教程"}
+        ],
+        "advanced": [
+            {"name": "Query Optimization", "url": "https://www.postgresql.org/docs/current/planner-optimizer.html",
+             "type": "优化器原理"},
+            {"name": "Database Internals", "url": "https://www.databass.dev/", "type": "数据库内核"},
+            {"name": "Distributed SQL Systems",
+             "url": "https://architecture-center.github.io/azure-architecture-center/data-guide/relational-data/",
+             "type": "分布式架构"}
+        ]
+    },
+    "Data Analysis": {
+        "beginner": [
+            {"name": "Pandas Getting Started", "url": "https://pandas.pydata.org/docs/getting_started/index.html",
+             "type": "文档"},
+            {"name": "Data Analysis with Python", "url": "https://www.coursera.org/learn/data-analysis-with-python",
+             "type": "课程"},
+            {"name": "Kaggle Data Cleaning", "url": "https://www.kaggle.com/learn/data-cleaning", "type": "实战"}
+        ],
+        "intermediate": [
+            {"name": "Advanced Pandas", "url": "https://pandas.pydata.org/docs/user_guide/advanced.html",
+             "type": "进阶文档"},
+            {"name": "Statistical Data Analysis",
+             "url": "https://www.coursera.org/specializations/statistics-with-python", "type": "统计分析"},
+            {"name": "Time Series Analysis", "url": "https://www.kaggle.com/learn/time-series", "type": "专题分析"}
+        ],
+        "advanced": [
+            {"name": "Big Data Analytics", "url": "https://spark.apache.org/docs/latest/sql-programming-guide.html",
+             "type": "大数据分析"},
+            {"name": "Advanced Statistics",
+             "url": "https://online.stanford.edu/courses/stats200-introduction-statistical-inference",
+             "type": "高级统计"},
+            {"name": "Causal Inference", "url": "https://mixtape.scunning.com/", "type": "因果推断"}
+        ]
+    },
+    "Cloud Computing": {
+        "beginner": [
+            {"name": "AWS Getting Started", "url": "https://aws.amazon.com/getting-started/", "type": "官方入门"},
+            {"name": "Cloud Fundamentals", "url": "https://www.coursera.org/learn/introduction-to-cloud",
+             "type": "基础课程"},
+            {"name": "Azure Fundamentals", "url": "https://docs.microsoft.com/en-us/learn/paths/azure-fundamentals/",
+             "type": "微软认证"}
+        ],
+        "intermediate": [
+            {"name": "AWS Solutions Architect",
+             "url": "https://aws.amazon.com/certification/certified-solutions-architect-associate/",
+             "type": "专业认证"},
+            {"name": "Kubernetes Deep Dive", "url": "https://kubernetes.io/docs/tutorials/", "type": "容器编排"},
+            {"name": "DevOps with Cloud",
+             "url": "https://www.coursera.org/specializations/devops-cloud-and-agile-foundations", "type": "运维实践"}
+        ],
+        "advanced": [
+            {"name": "Cloud Architecture Patterns", "url": "https://docs.microsoft.com/en-us/azure/architecture/",
+             "type": "架构设计"},
+            {"name": "Multi-Cloud Strategy", "url": "https://cloud.google.com/architecture/framework",
+             "type": "多云策略"},
+            {"name": "Serverless Computing", "url": "https://martinfowler.com/articles/serverless.html",
+             "type": "无服务器"}
+        ]
+    },
+    "MLOps": {
+        "beginner": [
+            {"name": "MLOps Fundamentals", "url": "https://ml-ops.org/content/motivation", "type": "概念入门"},
+            {"name": "MLflow Tutorial", "url": "https://mlflow.org/docs/latest/tutorials-and-examples/index.html",
+             "type": "工具教程"},
+            {"name": "ML Pipelines Intro",
+             "url": "https://www.coursera.org/learn/machine-learning-engineering-for-production-mlops",
+             "type": "流水线"}
+        ],
+        "intermediate": [
+            {"name": "Kubeflow Pipelines", "url": "https://www.kubeflow.org/docs/components/pipelines/",
+             "type": "生产部署"},
+            {"name": "Model Monitoring",
+             "url": "https://christophergs.com/machine%20learning/2020/03/14/how-to-monitor-machine-learning-models/",
+             "type": "模型监控"},
+            {"name": "A/B Testing for ML",
+             "url": "https://booking.ai/how-booking-com-increases-the-power-of-online-experiments-with-machine-learning-25aa102df618",
+             "type": "实验设计"}
+        ],
+        "advanced": [
+            {"name": "ML System Design", "url": "https://github.com/chiphuyen/machine-learning-systems-design",
+             "type": "系统设计"},
+            {"name": "Feature Stores", "url": "https://www.tecton.ai/blog/what-is-a-feature-store/",
+             "type": "特征工程"},
+            {"name": "Real-time ML", "url": "https://huyenchip.com/2020/12/27/real-time-machine-learning.html",
+             "type": "实时系统"}
+        ]
+    }
 }
 
 # 学校类型权重配置
@@ -533,20 +659,25 @@ def skill_input_component():
             st.rerun()
 
 
-# 显示学习资源
-def display_learning_resources(skills):
-    """显示学习资源卡片"""
+# 显示学习资源（支持分级）
+def display_learning_resources(skills, user_skills_data):
+    """显示分级学习资源卡片"""
     st.markdown('<div class="sub-header">🎓 推荐学习技能与资源</div>', unsafe_allow_html=True)
+
+    # 创建用户技能熟练度字典
+    user_proficiency = {}
+    for skill_item in user_skills_data:
+        if skill_item['skill']:
+            user_proficiency[skill_item['skill']] = skill_item['proficiency']
 
     # 确保至少显示4个技能的学习资源
     display_skills = []
 
     # 优先显示推荐技能中有资源的技能
     for skill in skills:
-        if skill.title() in LEARNING_RESOURCES:  # 处理大小写问题
+        if skill.title() in LEARNING_RESOURCES:
             display_skills.append(skill.title())
         elif skill.lower() in [k.lower() for k in LEARNING_RESOURCES.keys()]:
-            # 查找大小写不敏感的匹配
             for resource_key in LEARNING_RESOURCES.keys():
                 if skill.lower() == resource_key.lower():
                     display_skills.append(resource_key)
@@ -567,19 +698,41 @@ def display_learning_resources(skills):
     # 显示前4个技能的学习资源
     for skill in display_skills[:4]:
         if skill in LEARNING_RESOURCES:
-            st.markdown(f"### 📚 {skill}")
-            cols = st.columns(len(LEARNING_RESOURCES[skill]))
+            # 根据用户熟练度确定资源级别
+            proficiency = user_proficiency.get(skill, 0)
 
-            for i, resource in enumerate(LEARNING_RESOURCES[skill]):
-                with cols[i]:
-                    st.markdown(f"""
-                    <div class="skill-resource-card">
-                        <a href="{resource['url']}" target="_blank" class="resource-link">
-                            <strong>{resource['name']}</strong>
-                        </a>
-                        <br><small>{resource['type']}</small>
-                    </div>
-                    """, unsafe_allow_html=True)
+            if proficiency >= 80:
+                level = "advanced"
+                level_name = "高级"
+                level_color = "#e74c3c"
+            elif proficiency >= 60:
+                level = "intermediate"
+                level_name = "进阶"
+                level_color = "#f39c12"
+            else:
+                level = "beginner"
+                level_name = "入门"
+                level_color = "#27ae60"
+
+            st.markdown(
+                f"### 📚 {skill} <span style='color: {level_color}; font-size: 0.8em;'>({level_name}级资源)</span>",
+                unsafe_allow_html=True)
+
+            # 显示对应级别的资源
+            if level in LEARNING_RESOURCES[skill]:
+                resources = LEARNING_RESOURCES[skill][level]
+                cols = st.columns(len(resources))
+
+                for i, resource in enumerate(resources):
+                    with cols[i]:
+                        st.markdown(f"""
+                        <div class="skill-resource-card">
+                            <a href="{resource['url']}" target="_blank" class="resource-link">
+                                <strong>{resource['name']}</strong>
+                            </a>
+                            <br><small>{resource['type']}</small>
+                        </div>
+                        """, unsafe_allow_html=True)
         else:
             # 如果没有具体资源，显示通用学习建议
             st.markdown(f"### 📚 {skill}")
@@ -875,7 +1028,102 @@ def main():
             """, unsafe_allow_html=True)
 
         # 学习资源推荐
-        display_learning_resources(recommended_skills)
+        display_learning_resources(recommended_skills, skills_data)
+
+        # 编辑技能按钮
+        st.markdown('<div class="sub-header">⚙️ 调整设置</div>', unsafe_allow_html=True)
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            if st.button("✏️ 编辑技能配置", type="secondary"):
+                st.session_state.show_skill_editor = True
+                st.rerun()
+
+        # 技能编辑器
+        if st.session_state.get('show_skill_editor', False):
+            st.markdown("---")
+            st.markdown("### ✏️ 技能配置编辑")
+
+            # 重用技能输入组件
+            with st.container():
+                st.write("调整你的技能并重新评估熟练程度：")
+
+                # 添加技能按钮
+                if st.button("➕ 添加技能", key="add_skill_btn_edit"):
+                    st.session_state.skills_list.append({"skill": "", "proficiency": 50})
+                    st.rerun()
+
+                # 技能输入行
+                skills_to_remove = []
+                for i, skill_item in enumerate(st.session_state.skills_list):
+                    with st.container():
+                        st.markdown(f'<div class="skill-compact-row">', unsafe_allow_html=True)
+
+                        col1, col2, col3 = st.columns([4, 3, 1])
+
+                        with col1:
+                            skill_options = [""] + PREDEFINED_SKILLS + ["自定义..."]
+                            current_skill = skill_item.get('skill', '')
+
+                            if current_skill and current_skill not in PREDEFINED_SKILLS:
+                                skill_options.insert(-1, current_skill)
+
+                            selected_skill = st.selectbox(
+                                f"技能 {i + 1}",
+                                options=skill_options,
+                                index=skill_options.index(current_skill) if current_skill in skill_options else 0,
+                                key=f"skill_edit_{i}",
+                                label_visibility="collapsed"
+                            )
+
+                            if selected_skill == "自定义...":
+                                custom_skill = st.text_input(
+                                    "",
+                                    value=current_skill if current_skill not in PREDEFINED_SKILLS else "",
+                                    key=f"custom_skill_edit_{i}",
+                                    placeholder="输入自定义技能"
+                                )
+                                st.session_state.skills_list[i]['skill'] = custom_skill
+                            else:
+                                st.session_state.skills_list[i]['skill'] = selected_skill
+
+                        with col2:
+                            proficiency = st.slider(
+                                "熟练程度",
+                                min_value=0,
+                                max_value=100,
+                                value=skill_item.get('proficiency', 50),
+                                step=5,
+                                key=f"proficiency_edit_{i}",
+                                label_visibility="collapsed"
+                            )
+                            st.session_state.skills_list[i]['proficiency'] = proficiency
+
+                        with col3:
+                            if len(st.session_state.skills_list) > 1:
+                                if st.button("🗑️", key=f"remove_edit_{i}", help="删除技能"):
+                                    skills_to_remove.append(i)
+
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+                # 移除标记的技能
+                for i in reversed(skills_to_remove):
+                    st.session_state.skills_list.pop(i)
+                    st.rerun()
+
+                # 操作按钮
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    if st.button("🚀 重新分析", type="primary"):
+                        st.session_state.show_skill_editor = False
+                        st.rerun()
+
+                with col2:
+                    if st.button("❌ 取消编辑"):
+                        st.session_state.show_skill_editor = False
+                        st.rerun()
 
         # 导出功能
         st.markdown('<div class="sub-header">📤 导出报告</div>', unsafe_allow_html=True)
