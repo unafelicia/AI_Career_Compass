@@ -43,7 +43,7 @@ st.markdown("""
         color: white;
         text-align: center;
         margin: 0.5rem 0;
-        height: 160px;
+        height: 180px;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -116,6 +116,22 @@ st.markdown("""
     }
     .resource-link:hover {
         color: #A23B72;
+    }
+    .author-footer {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-top: 1px solid #e0e0e0;
+        text-align: center;
+        margin-top: 3rem;
+        color: #666;
+    }
+    .author-footer a {
+        color: #2E86AB;
+        text-decoration: none;
+    }
+    .author-footer a:hover {
+        color: #A23B72;
+        text-decoration: underline;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -890,6 +906,15 @@ AI Career Compass 分析报告
             if st.button("🔄 重新分析"):
                 st.session_state.analysis_complete = False
                 st.rerun()
+
+    # 作者信息footer
+    st.markdown("""
+    <div class="author-footer">
+        <p><strong>🧭 AI Career Compass</strong></p>
+        <p>Created by <a href="https://www.linkedin.com/in/meng-ni-felicia/" target="_blank">Meng Ni (Felicia)</a></p>
+        <p><small>© 2024 AI Career Compass. 帮助你在AI职业路径上找到正确方向。</small></p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
