@@ -5,6 +5,7 @@ import joblib
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import openai
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -38,15 +39,32 @@ st.markdown("""
     }
     .metric-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1.5rem;
+        padding: 1rem;
         border-radius: 12px;
         color: white;
         text-align: center;
         margin: 0.5rem 0;
-        height: 140px;
+        height: 160px;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        overflow: hidden;
+    }
+    .metric-card h2 {
+        font-size: 1.5rem;
+        margin: 0.5rem 0;
+        word-wrap: break-word;
+    }
+    .metric-card h3 {
+        font-size: 1rem;
+        margin: 0.3rem 0;
+    }
+    .metric-card p {
+        font-size: 0.9rem;
+        margin: 0.2rem 0;
+    }
+    .metric-card small {
+        font-size: 0.8rem;
     }
     .advice-card {
         background: white;
@@ -55,6 +73,10 @@ st.markdown("""
         margin: 1rem 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         border-left: 4px solid #2E86AB;
+        height: 150px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
     }
     .advice-header {
         display: flex;
@@ -501,7 +523,34 @@ def display_learning_resources(skills):
     """显示学习资源卡片"""
     st.markdown('<div class="sub-header">🎓 推荐学习技能与资源</div>', unsafe_allow_html=True)
 
-    for skill in skills[:4]:  # 显示前4个技能
+    # 确保至少显示4个技能的学习资源
+    display_skills = []
+
+    # 优先显示推荐技能中有资源的技能
+    for skill in skills:
+        if skill.title() in LEARNING_RESOURCES:  # 处理大小写问题
+            display_skills.append(skill.title())
+        elif skill.lower() in [k.lower() for k in LEARNING_RESOURCES.keys()]:
+            # 查找大小写不敏感的匹配
+            for resource_key in LEARNING_RESOURCES.keys():
+                if skill.lower() == resource_key.lower():
+                    display_skills.append(resource_key)
+                    break
+
+    # 如果推荐技能中的资源不足4个，补充热门技能
+    popular_skills = ["Python", "Machine Learning", "SQL", "Data Analysis", "Deep Learning", "Cloud Computing"]
+    for skill in popular_skills:
+        if len(display_skills) >= 4:
+            break
+        if skill not in display_skills:
+            display_skills.append(skill)
+
+    # 确保至少有4个技能显示
+    if len(display_skills) < 4:
+        display_skills = ["Python", "Machine Learning", "SQL", "Data Analysis"]
+
+    # 显示前4个技能的学习资源
+    for skill in display_skills[:4]:
         if skill in LEARNING_RESOURCES:
             st.markdown(f"### 📚 {skill}")
             cols = st.columns(len(LEARNING_RESOURCES[skill]))
@@ -516,6 +565,15 @@ def display_learning_resources(skills):
                         <br><small>{resource['type']}</small>
                     </div>
                     """, unsafe_allow_html=True)
+        else:
+            # 如果没有具体资源，显示通用学习建议
+            st.markdown(f"### 📚 {skill}")
+            st.markdown(f"""
+            <div class="skill-resource-card">
+                <strong>推荐学习 {skill}</strong><br>
+                <small>建议通过在线课程、官方文档和实战项目来学习</small>
+            </div>
+            """, unsafe_allow_html=True)
 
 
 # 主界面
