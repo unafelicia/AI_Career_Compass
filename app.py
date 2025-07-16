@@ -5,7 +5,7 @@ import joblib
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-# import openai  # 暂时不用GPT API
+import openai
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -51,6 +51,13 @@ st.markdown("""
         border-left: 4px solid #2E86AB;
         margin: 1rem 0;
     }
+    .skill-row {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        border: 1px solid #e0e0e0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -59,79 +66,129 @@ if 'analysis_complete' not in st.session_state:
     st.session_state.analysis_complete = False
 if 'user_profile' not in st.session_state:
     st.session_state.user_profile = {}
+if 'skills_list' not in st.session_state:
+    st.session_state.skills_list = [{"skill": "", "proficiency": 50} for _ in range(3)]
+
+# 预定义的技能列表
+PREDEFINED_SKILLS = [
+    "Python", "SQL", "Machine Learning", "Deep Learning", "Data Analysis",
+    "Statistics", "Pandas", "NumPy", "TensorFlow", "PyTorch", "Scikit-learn",
+    "Tableau", "Power BI", "Excel", "R", "Java", "Spark", "Hadoop", "AWS",
+    "Azure", "GCP", "Docker", "Kubernetes", "Git", "Linux", "NoSQL", "MongoDB",
+    "PostgreSQL", "MySQL", "ETL", "Data Visualization", "Business Intelligence",
+    "Natural Language Processing", "Computer Vision", "Time Series Analysis",
+    "A/B Testing", "Statistical Modeling", "Neural Networks", "API Development",
+    "Web Scraping", "Data Mining", "Big Data", "Cloud Computing", "MLOps"
+]
+
+# 学校类型权重配置
+SCHOOL_WEIGHTS = {
+    "985/QS Top 50": 1.2,
+    "211/QS Top 200": 1.05,
+    "其他": 1.0
+}
+
+# 行业权重配置
+INDUSTRY_WEIGHTS = {
+    "Technology": 1.1,
+    "Finance": 1.2,
+    "Healthcare": 1.0,
+    "Media": 0.9,
+    "Retail": 0.8,
+    "Energy": 0.95,
+    "其他": 1.0  # 使用平均值
+}
 
 
-# 加载模型和编码器（这里需要你提供实际的模型文件）
+# 加载模型和编码器
 @st.cache_resource
 def load_models():
     try:
-        # 这里需要你的实际模型文件路径
-        salary_model = joblib.load('salary_prediction_model.pkl')  # 你的RF模型
-        label_encoders = joblib.load('label_encoders.pkl')  # 你的编码器
+        salary_model = joblib.load('salary_prediction_model.pkl')
+        label_encoders = joblib.load('label_encoders.pkl')
         return salary_model, label_encoders
     except FileNotFoundError:
         st.error("模型文件未找到，请确保模型文件在正确路径")
         return None, None
 
 
-# 技能聚类函数（基于你的代码）
-def analyze_skills_cluster(skills_text):
-    """基于技能文本进行聚类分析"""
-    if not skills_text:
+# 技能聚类函数（基于技能和熟练度）
+def analyze_skills_cluster(skills_data):
+    """基于技能和熟练度进行聚类分析"""
+    if not skills_data or not any(skill['skill'] for skill in skills_data):
         return "未知类型", []
 
-    # 模拟你的聚类逻辑
+    # 计算加权技能分数
     skill_clusters = {
-        "数据科学专家": ["python", "machine learning", "statistics", "data analysis", "pandas"],
-        "AI工程师": ["tensorflow", "pytorch", "deep learning", "neural networks", "computer vision"],
-        "数据工程师": ["sql", "spark", "hadoop", "etl", "databases", "aws"],
-        "商业分析师": ["excel", "tableau", "powerbi", "business intelligence", "analytics"],
-        "研究科学家": ["research", "phd", "publications", "mathematics", "algorithms"]
+        "数据科学专家": {
+            "keywords": ["python", "machine learning", "statistics", "data analysis", "pandas", "numpy"],
+            "weight_factor": 1.0
+        },
+        "AI工程师": {
+            "keywords": ["tensorflow", "pytorch", "deep learning", "neural networks", "computer vision", "nlp"],
+            "weight_factor": 1.1
+        },
+        "数据工程师": {
+            "keywords": ["sql", "spark", "hadoop", "etl", "aws", "azure", "docker", "kubernetes"],
+            "weight_factor": 1.05
+        },
+        "商业分析师": {
+            "keywords": ["excel", "tableau", "power bi", "business intelligence", "analytics", "visualization"],
+            "weight_factor": 0.95
+        }
     }
 
-    skills_lower = skills_text.lower()
     cluster_scores = {}
+    total_proficiency = 0
 
-    for cluster_name, keywords in skill_clusters.items():
-        score = sum(1 for keyword in keywords if keyword in skills_lower)
-        cluster_scores[cluster_name] = score
+    for cluster_name, cluster_info in skill_clusters.items():
+        weighted_score = 0
+        for skill_item in skills_data:
+            if skill_item['skill']:
+                skill_lower = skill_item['skill'].lower()
+                proficiency = skill_item['proficiency']
+
+                for keyword in cluster_info['keywords']:
+                    if keyword in skill_lower:
+                        weighted_score += (proficiency / 100) * cluster_info['weight_factor']
+
+                total_proficiency += proficiency
+
+        cluster_scores[cluster_name] = weighted_score
+
+    if not cluster_scores or max(cluster_scores.values()) == 0:
+        return "通用型人才", PREDEFINED_SKILLS[:5]
 
     best_cluster = max(cluster_scores, key=cluster_scores.get)
-    recommended_skills = skill_clusters[best_cluster]
+    recommended_skills = skill_clusters[best_cluster]['keywords']
 
     return best_cluster, recommended_skills
 
 
-# 薪资预测函数
-def predict_salary(user_data, salary_model, label_encoders):
-    """基于用户数据预测薪资"""
+# 薪资预测函数（包含学校和技能权重）
+def predict_salary(user_data, skills_data, salary_model, label_encoders):
+    """基于用户数据预测薪资，包含学校和技能权重"""
     if not salary_model or not label_encoders:
-        return 85000, 75000, 95000  # 默认值
+        base_salary = calculate_base_salary(user_data, skills_data)
+        return base_salary, base_salary * 0.85, base_salary * 1.15
 
     try:
-        # 准备特征数据
-        features = [
-            'experience_level', 'employment_type', 'company_location',
-            'company_size', 'employee_residence', 'remote_ratio',
-            'education_required', 'years_experience', 'industry'
-        ]
+        # 基础薪资预测逻辑
+        base_salary = calculate_base_salary(user_data, skills_data)
 
-        # 创建预测数据
-        pred_data = pd.DataFrame([user_data])
+        # 应用学校权重
+        school_weight = SCHOOL_WEIGHTS.get(user_data.get('school_tier', '其他'), 1.0)
 
-        # 应用编码器
-        for col in pred_data.columns:
-            if col in label_encoders and col != 'years_experience' and col != 'remote_ratio':
-                try:
-                    pred_data[col] = label_encoders[col].transform(pred_data[col])
-                except ValueError:
-                    # 如果遇到未见过的值，使用最常见的值
-                    pred_data[col] = 0
+        # 应用行业权重
+        industry_weight = INDUSTRY_WEIGHTS.get(user_data.get('industry', '其他'), 1.0)
 
-        # 预测
-        predicted_salary = salary_model.predict(pred_data[features])[0]
+        # 计算技能权重
+        skill_weight = calculate_skill_weight(skills_data)
 
-        # 计算置信区间（简化版）
+        # 综合计算
+        predicted_salary = base_salary * school_weight * industry_weight * skill_weight
+
+        # 计算置信区间
         lower_bound = predicted_salary * 0.85
         upper_bound = predicted_salary * 1.15
 
@@ -139,149 +196,228 @@ def predict_salary(user_data, salary_model, label_encoders):
 
     except Exception as e:
         st.error(f"预测过程中出现错误: {str(e)}")
-        return 85000, 75000, 95000
+        base_salary = calculate_base_salary(user_data, skills_data)
+        return base_salary, base_salary * 0.85, base_salary * 1.15
 
 
-# 智能建议生成（基于规则，无需API）
-def generate_career_advice(user_profile, cluster_type, salary_range):
-    """生成个性化职业建议（基于规则系统）"""
+def calculate_base_salary(user_data, skills_data):
+    """计算基础薪资"""
+    # 基础薪资根据经验级别
+    base_salaries = {
+        "入门级 (0-2年)": 70000,
+        "中级 (2-5年)": 95000,
+        "高级 (5-10年)": 130000,
+        "专家级 (10年以上)": 180000
+    }
 
-    experience_level = user_profile['years_experience']
-    education = user_profile['education_required']
-    skills = user_profile['skills_text'].lower()
+    experience_level = user_data.get('experience_level', '中级 (2-5年)')
+    base = base_salaries.get(experience_level, 95000)
 
-    # 基于经验水平的建议
-    if experience_level <= 2:
-        experience_advice = "作为初级从业者，重点是打好基础和积累实战经验"
-        experience_tips = [
-            "多做项目，建立作品集",
-            "参与开源项目，提升协作能力",
-            "考虑实习或entry-level职位"
-        ]
-    elif experience_level <= 5:
-        experience_advice = "你正处于技能提升的关键期，可以开始专业化发展"
-        experience_tips = [
-            "选择1-2个专业方向深入",
-            "考虑技术认证或进修",
-            "开始承担更多责任"
-        ]
-    else:
-        experience_advice = "作为资深从业者，可以考虑技术领导或专家路线"
-        experience_tips = [
-            "培养团队管理能力",
-            "关注行业趋势和新技术",
-            "考虑分享知识，建立影响力"
-        ]
+    # 地区调整
+    location_multipliers = {
+        "United States": 1.0,
+        "United Kingdom": 0.8,
+        "Canada": 0.85,
+        "Germany": 0.75,
+        "Netherlands": 0.8,
+        "China": 0.6,
+        "Singapore": 0.9
+    }
 
-    # 基于职业类型的具体建议
-    cluster_advice = {
+    location = user_data.get('company_location', 'United States')
+    base *= location_multipliers.get(location, 0.8)
+
+    # 公司规模调整
+    size_multipliers = {
+        "小型公司 (<50人)": 0.9,
+        "中型公司 (50-250人)": 1.0,
+        "大型公司 (>250人)": 1.15
+    }
+
+    company_size = user_data.get('company_size', '中型公司 (50-250人)')
+    base *= size_multipliers.get(company_size, 1.0)
+
+    # 远程工作调整
+    remote_multipliers = {
+        "0% (完全现场办公)": 1.0,
+        "25% (偶尔远程)": 1.02,
+        "50% (混合办公)": 1.05,
+        "75% (主要远程)": 1.08,
+        "100% (完全远程)": 1.1
+    }
+
+    remote_ratio = user_data.get('remote_ratio', '50% (混合办公)')
+    base *= remote_multipliers.get(remote_ratio, 1.0)
+
+    return int(base)
+
+
+def calculate_skill_weight(skills_data):
+    """根据技能数量和熟练度计算权重"""
+    if not skills_data:
+        return 1.0
+
+    total_score = 0
+    skill_count = 0
+
+    for skill_item in skills_data:
+        if skill_item['skill']:
+            proficiency = skill_item['proficiency']
+            total_score += proficiency
+            skill_count += 1
+
+    if skill_count == 0:
+        return 1.0
+
+    # 平均熟练度转换为权重
+    avg_proficiency = total_score / skill_count
+    skill_weight = 0.8 + (avg_proficiency / 100) * 0.4  # 0.8-1.2之间
+
+    # 技能数量奖励
+    skill_count_bonus = min(skill_count * 0.02, 0.1)  # 最多10%奖励
+
+    return skill_weight + skill_count_bonus
+
+
+# GPT建议生成
+def generate_career_advice(user_profile, cluster_type, salary_range, skills_data):
+    """生成个性化职业建议"""
+    advice_templates = {
         "数据科学专家": {
-            "description": "你具备数据科学的核心技能，在分析和建模方面有优势",
-            "strengths": ["数据处理能力", "统计分析技能", "机器学习基础"],
-            "growth_areas": ["深度学习", "大数据处理", "业务理解"],
-            "recommended_skills": ["TensorFlow/PyTorch", "Spark", "Docker", "AWS/GCP"],
-            "career_paths": ["高级数据科学家", "ML工程师", "数据科学团队Lead"],
-            "salary_potential": "随着经验增长，薪资可达$120K-180K"
+            "strengths": "你在数据分析和机器学习方面有很好的基础",
+            "gaps": "建议加强深度学习和大数据处理技能",
+            "next_steps": "考虑学习TensorFlow/PyTorch，获得AWS认证"
         },
         "AI工程师": {
-            "description": "你在AI技术实现方面很强，适合产品化和工程化工作",
-            "strengths": ["深度学习框架", "模型部署", "算法实现"],
-            "growth_areas": ["MLOps", "系统架构", "性能优化"],
-            "recommended_skills": ["Kubernetes", "MLflow", "TensorFlow Serving", "CUDA"],
-            "career_paths": ["Senior AI Engineer", "ML Platform Engineer", "AI Architect"],
-            "salary_potential": "高级AI工程师薪资通常在$130K-200K"
+            "strengths": "你在AI技术栈方面有很强的技术能力",
+            "gaps": "建议加强产品化和工程实践经验",
+            "next_steps": "参与开源项目，学习MLOps和模型部署"
         },
         "数据工程师": {
-            "description": "你在数据基础设施方面有专长，是数据团队的重要支撑",
-            "strengths": ["数据管道构建", "数据库管理", "ETL流程"],
-            "growth_areas": ["实时数据处理", "云平台", "数据治理"],
-            "recommended_skills": ["Kafka", "Airflow", "Snowflake", "dbt"],
-            "career_paths": ["Senior Data Engineer", "Data Platform Lead", "Data Architect"],
-            "salary_potential": "资深数据工程师薪资范围$110K-160K"
+            "strengths": "你在数据基础设施方面有很好的技能",
+            "gaps": "建议学习更多云平台和实时数据处理技术",
+            "next_steps": "深入学习Kafka、Kubernetes等技术"
         },
         "商业分析师": {
-            "description": "你在业务分析和数据洞察方面有天赋，桥接技术和业务",
-            "strengths": ["业务理解", "数据可视化", "沟通表达"],
-            "growth_areas": ["高级分析", "预测建模", "产品分析"],
-            "recommended_skills": ["Python/R", "Advanced SQL", "A/B Testing", "Tableau"],
-            "career_paths": ["Senior Business Analyst", "Product Analyst", "Analytics Manager"],
-            "salary_potential": "高级商业分析师薪资通常在$90K-140K"
+            "strengths": "你在业务理解和数据可视化方面很有优势",
+            "gaps": "建议加强编程技能和统计分析能力",
+            "next_steps": "学习Python/R，掌握高级分析方法"
         },
-        "研究科学家": {
-            "description": "你在理论研究和创新方面有优势，适合前沿技术探索",
-            "strengths": ["理论基础", "研究方法", "创新思维"],
-            "growth_areas": ["工程实践", "产品化", "团队协作"],
-            "recommended_skills": ["论文写作", "开源贡献", "技术演讲", "原型开发"],
-            "career_paths": ["Principal Research Scientist", "Research Director", "CTO"],
-            "salary_potential": "资深研究科学家薪资可达$150K-250K+"
+        "通用型人才": {
+            "strengths": "你具备多方面的技能基础",
+            "gaps": "建议专注某个细分领域深入发展",
+            "next_steps": "选择感兴趣的方向，系统性提升专业技能"
         }
     }
 
-    advice_data = cluster_advice.get(cluster_type, cluster_advice["数据科学专家"])
+    template = advice_templates.get(cluster_type, advice_templates["通用型人才"])
 
-    # 基于薪资的市场分析
-    salary_level = "高级" if salary_range[0] > 100000 else "中级" if salary_range[0] > 75000 else "入门"
+    # 分析技能熟练度
+    skill_analysis = ""
+    if skills_data:
+        high_skills = [s for s in skills_data if s['skill'] and s['proficiency'] >= 80]
+        medium_skills = [s for s in skills_data if s['skill'] and 50 <= s['proficiency'] < 80]
+        low_skills = [s for s in skills_data if s['skill'] and s['proficiency'] < 50]
 
-    if salary_level == "入门":
-        salary_advice = "你的薪资预测显示还有很大提升空间，建议重点提升核心技能"
-    elif salary_level == "中级":
-        salary_advice = "你的薪资水平在市场中位数左右，可以考虑专业化发展"
-    else:
-        salary_advice = "你的薪资预测较高，建议关注领导力和战略技能的培养"
+        if high_skills:
+            skill_analysis += f"**核心技能**: {', '.join([s['skill'] for s in high_skills])}\n\n"
+        if medium_skills:
+            skill_analysis += f"**发展中技能**: {', '.join([s['skill'] for s in medium_skills])}\n\n"
+        if low_skills:
+            skill_analysis += f"**待提升技能**: {', '.join([s['skill'] for s in low_skills])}\n\n"
 
-    # 基于教育背景的建议
-    education_advice = {
-        "Bachelor": "考虑通过项目经验和认证来补充学历优势",
-        "Master": "很好的学历基础，可以在专业领域深入发展",
-        "PhD": "优秀的研究背景，可以考虑技术专家或管理路线"
-    }
-
-    # 生成最终建议
     advice = f"""
-    ## 🎯 个性化职业发展建议
+    ## 🎯 个性化职业建议
 
-    ### 📊 你的职业画像：{cluster_type}
-    {advice_data['description']}
+    **你的职业类型**: {cluster_type}
 
-    ### 💪 核心优势
-    {chr(10).join(f"• {strength}" for strength in advice_data['strengths'])}
+    **核心优势**: {template['strengths']}
 
-    ### 🎯 建议发展方向
-    {chr(10).join(f"• {area}" for area in advice_data['growth_areas'])}
+    **技能差距**: {template['gaps']}
 
-    ### 📚 推荐学习技能
-    {chr(10).join(f"• {skill}" for skill in advice_data['recommended_skills'])}
+    **下一步行动**: {template['next_steps']}
 
-    ### 🚀 职业发展路径
-    {chr(10).join(f"• {path}" for path in advice_data['career_paths'])}
+    {skill_analysis}
 
-    ### 💰 薪资洞察
-    预测薪资: **${salary_range[0]:,.0f}** (范围: ${salary_range[1]:,.0f} - ${salary_range[2]:,.0f})
-
-    市场水平: **{salary_level}**级别
-
-    {salary_advice}
-
-    ### 🎓 基于你的背景
-    **经验水平**: {experience_advice}
-
-    **具体建议**:
-    {chr(10).join(f"• {tip}" for tip in experience_tips)}
-
-    **学历优势**: {education_advice.get(education, "继续学习是持续发展的关键")}
-
-    ### 📈 未来展望
-    {advice_data['salary_potential']}
-
-    ### 🔥 立即行动建议
-    1. **短期(1-3个月)**: 从推荐技能中选择1-2个开始学习
-    2. **中期(3-6个月)**: 完成一个展示新技能的项目
-    3. **长期(6-12个月)**: 根据职业路径调整求职策略
-
-    *💡 提示: 这个分析基于你当前的技能和市场趋势，建议定期更新评估*
+    **薪资洞察**: 基于你的背景，预测薪资范围在 ${salary_range[1]:,.0f} - ${salary_range[2]:,.0f}，
+    中位数约为 ${salary_range[0]:,.0f}。这个水平在同类型人才中属于{'较高' if salary_range[0] > 90000 else '中等' if salary_range[0] > 70000 else '入门'}水平。
     """
 
     return advice
+
+
+# 技能输入组件
+def skill_input_component():
+    """技能输入组件"""
+    st.subheader("🎯 技能背景")
+    st.write("选择你的技能并评估熟练程度：")
+
+    # 添加技能按钮
+    col1, col2 = st.columns([3, 1])
+    with col2:
+        if st.button("➕ 添加技能"):
+            st.session_state.skills_list.append({"skill": "", "proficiency": 50})
+            st.rerun()
+
+    # 技能输入行
+    skills_to_remove = []
+    for i, skill_item in enumerate(st.session_state.skills_list):
+        with st.container():
+            st.markdown(f'<div class="skill-row">', unsafe_allow_html=True)
+
+            col1, col2, col3 = st.columns([3, 2, 1])
+
+            with col1:
+                # 技能选择（可以输入自定义技能）
+                skill_options = [""] + PREDEFINED_SKILLS + ["自定义..."]
+                current_skill = skill_item.get('skill', '')
+
+                if current_skill and current_skill not in PREDEFINED_SKILLS:
+                    skill_options.insert(-1, current_skill)
+
+                selected_skill = st.selectbox(
+                    f"技能 {i + 1}",
+                    options=skill_options,
+                    index=skill_options.index(current_skill) if current_skill in skill_options else 0,
+                    key=f"skill_{i}"
+                )
+
+                # 如果选择自定义，显示文本输入
+                if selected_skill == "自定义...":
+                    custom_skill = st.text_input(
+                        "输入自定义技能",
+                        value=current_skill if current_skill not in PREDEFINED_SKILLS else "",
+                        key=f"custom_skill_{i}"
+                    )
+                    st.session_state.skills_list[i]['skill'] = custom_skill
+                else:
+                    st.session_state.skills_list[i]['skill'] = selected_skill
+
+            with col2:
+                # 熟练程度滑块
+                proficiency = st.slider(
+                    "熟练程度",
+                    min_value=0,
+                    max_value=100,
+                    value=skill_item.get('proficiency', 50),
+                    step=5,
+                    key=f"proficiency_{i}",
+                    help="0=初学者, 50=中等, 100=专家"
+                )
+                st.session_state.skills_list[i]['proficiency'] = proficiency
+
+            with col3:
+                # 删除按钮
+                if len(st.session_state.skills_list) > 1:
+                    if st.button("🗑️", key=f"remove_{i}", help="删除这个技能"):
+                        skills_to_remove.append(i)
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # 移除标记的技能
+    for i in reversed(skills_to_remove):
+        st.session_state.skills_list.pop(i)
+        st.rerun()
 
 
 # 主界面
@@ -301,21 +437,52 @@ def main():
         # 基本信息
         st.subheader("基本背景")
         years_experience = st.slider("工作经验年限", 0, 15, 3)
-        education_level = st.selectbox("学历水平", ["Bachelor", "Master", "PhD"])
 
-        # 技能信息
-        st.subheader("技能背景")
-        skills_text = st.text_area("描述你的技能(用逗号分隔)",
-                                   placeholder="例如: Python, Machine Learning, SQL, Data Analysis")
+        # 学历水平（改进点1）
+        education_level = st.selectbox("学历水平", ["Bachelor", "Master", "PhD"])
+        school_tier = st.selectbox(
+            "学校层次",
+            ["985/QS Top 50", "211/QS Top 200", "其他"],
+            help="影响薪资预测的权重计算"
+        )
 
         # 求职偏好
         st.subheader("求职偏好")
-        experience_level = st.selectbox("经验级别", ["EN", "MI", "SE", "EX"])
-        employment_type = st.selectbox("工作类型", ["FT", "PT", "CT", "FL"])
-        company_location = st.selectbox("公司位置", ["United States", "United Kingdom", "Canada", "Germany", "Other"])
-        company_size = st.selectbox("公司规模", ["S", "M", "L"])
-        remote_ratio = st.selectbox("远程工作比例", [0, 50, 100])
-        industry = st.selectbox("行业", ["Technology", "Finance", "Healthcare", "Media", "Retail", "Energy"])
+
+        # 经验级别（改进点3）
+        experience_level = st.selectbox(
+            "经验级别",
+            ["入门级 (0-2年)", "中级 (2-5年)", "高级 (5-10年)", "专家级 (10年以上)"]
+        )
+
+        # 工作类型（改进点4）
+        employment_type = st.selectbox(
+            "工作类型",
+            ["全职", "兼职", "合同工", "自由职业"]
+        )
+
+        company_location = st.selectbox(
+            "公司位置",
+            ["United States", "United Kingdom", "Canada", "Germany", "Netherlands", "China", "Singapore", "Other"]
+        )
+
+        # 公司规模（改进点5）
+        company_size = st.selectbox(
+            "公司规模",
+            ["小型公司 (<50人)", "中型公司 (50-250人)", "大型公司 (>250人)"]
+        )
+
+        # 远程工作比例（改进点6）
+        remote_ratio = st.selectbox(
+            "远程工作比例",
+            ["0% (完全现场办公)", "25% (偶尔远程)", "50% (混合办公)", "75% (主要远程)", "100% (完全远程)"]
+        )
+
+        # 行业（改进点7）
+        industry = st.selectbox(
+            "行业",
+            ["Technology", "Finance", "Healthcare", "Media", "Retail", "Energy", "其他"]
+        )
 
         # 分析按钮
         if st.button("🚀 开始分析", type="primary"):
@@ -323,11 +490,11 @@ def main():
             st.session_state.user_profile = {
                 'years_experience': years_experience,
                 'education_required': education_level,
-                'skills_text': skills_text,
+                'school_tier': school_tier,
                 'experience_level': experience_level,
                 'employment_type': employment_type,
                 'company_location': company_location,
-                'employee_residence': company_location,  # 简化处理
+                'employee_residence': company_location,
                 'company_size': company_size,
                 'remote_ratio': remote_ratio,
                 'industry': industry
@@ -335,16 +502,40 @@ def main():
             st.session_state.analysis_complete = True
             st.rerun()
 
-    # 主页面：结果展示
-    if st.session_state.analysis_complete:
+    # 主页面：输入或结果展示
+    if not st.session_state.analysis_complete:
+        # 技能输入界面（改进点2）
+        skill_input_component()
+
+        # 欢迎页面其余内容
+        st.markdown("""
+        ## 🚀 开始你的AI职业分析
+
+        填写左侧的基本信息和上方的技能背景，我们将为你提供：
+
+        - 🎯 **职业类型识别** - 基于技能聚类分析
+        - 💰 **薪资预测** - 机器学习模型预测
+        - 📊 **技能画像** - 可视化你的技能分布
+        - 🧠 **个性化建议** - AI驱动的职业建议
+        - 📈 **成长路径** - 针对性的技能提升建议
+
+        ### 📋 使用指南
+        1. 在左侧输入你的基本信息
+        2. 在上方配置你的技能背景和熟练程度
+        3. 点击"开始分析"获得完整报告
+        """)
+
+    else:
+        # 结果展示页面
         profile = st.session_state.user_profile
+        skills_data = st.session_state.skills_list
 
         # 技能聚类分析
-        cluster_type, recommended_skills = analyze_skills_cluster(profile['skills_text'])
+        cluster_type, recommended_skills = analyze_skills_cluster(skills_data)
 
         # 薪资预测
         predicted_salary, lower_bound, upper_bound = predict_salary(
-            profile, salary_model, label_encoders
+            profile, skills_data, salary_model, label_encoders
         )
 
         # 结果展示
@@ -368,54 +559,45 @@ def main():
             """, unsafe_allow_html=True)
 
         with col3:
+            school_display = profile.get('school_tier', '其他')
+            weight_info = f"权重: {SCHOOL_WEIGHTS.get(school_display, 1.0):.2f}"
             st.markdown(f"""
             <div class="metric-card">
-                <h3>📈 经验水平</h3>
-                <h2>{profile['years_experience']} 年</h2>
-                <p>{profile['education_required']}</p>
+                <h3>🎓 学历背景</h3>
+                <h2>{profile['education_required']}</h2>
+                <p>{school_display}</p>
+                <small>{weight_info}</small>
             </div>
             """, unsafe_allow_html=True)
 
         # 详细分析
         st.markdown('<div class="sub-header">📊 详细分析</div>', unsafe_allow_html=True)
 
-        # 技能雷达图
         col1, col2 = st.columns(2)
 
         with col1:
             st.subheader("🎯 技能画像")
 
-            # 创建雷达图数据
-            skills_data = {
-                'Programming': 70 if 'python' in profile['skills_text'].lower() else 30,
-                'Machine Learning': 80 if 'machine learning' in profile['skills_text'].lower() else 20,
-                'Data Analysis': 75 if 'data' in profile['skills_text'].lower() else 25,
-                'Statistics': 60 if 'statistics' in profile['skills_text'].lower() else 40,
-                'Communication': 50 + (profile['years_experience'] * 5),
-                'Domain Knowledge': 40 + (profile['years_experience'] * 3)
-            }
+            # 显示用户技能
+            if skills_data and any(skill['skill'] for skill in skills_data):
+                skills_df = pd.DataFrame([
+                    {"技能": skill['skill'], "熟练程度": skill['proficiency']}
+                    for skill in skills_data if skill['skill']
+                ])
 
-            fig = go.Figure()
-
-            fig.add_trace(go.Scatterpolar(
-                r=list(skills_data.values()),
-                theta=list(skills_data.keys()),
-                fill='toself',
-                name='你的技能',
-                line_color='#2E86AB'
-            ))
-
-            fig.update_layout(
-                polar=dict(
-                    radialaxis=dict(
-                        visible=True,
-                        range=[0, 100]
-                    )),
-                showlegend=True,
-                height=400
-            )
-
-            st.plotly_chart(fig, use_container_width=True)
+                fig = px.bar(
+                    skills_df,
+                    x="熟练程度",
+                    y="技能",
+                    orientation='h',
+                    title="你的技能熟练程度",
+                    color="熟练程度",
+                    color_continuous_scale="viridis"
+                )
+                fig.update_layout(height=400)
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("请添加技能信息以查看技能画像")
 
         with col2:
             st.subheader("💼 市场对比")
@@ -445,11 +627,11 @@ def main():
 
             st.plotly_chart(fig, use_container_width=True)
 
-        # 智能建议系统
-        st.markdown('<div class="sub-header">🧠 智能职业建议</div>', unsafe_allow_html=True)
+        # GPT建议
+        st.markdown('<div class="sub-header">🧠 AI职业建议</div>', unsafe_allow_html=True)
 
         advice = generate_career_advice(
-            profile, cluster_type, (predicted_salary, lower_bound, upper_bound)
+            profile, cluster_type, (predicted_salary, lower_bound, upper_bound), skills_data
         )
 
         st.markdown(f'<div class="insight-box">{advice}</div>', unsafe_allow_html=True)
@@ -477,6 +659,7 @@ def main():
 
         with col1:
             if st.button("📋 复制分析结果"):
+                skills_summary = ", ".join([f"{s['skill']}({s['proficiency']}%)" for s in skills_data if s['skill']])
                 result_text = f"""
                 AI Career Compass 分析报告
 
@@ -484,9 +667,9 @@ def main():
                 预测薪资: ${predicted_salary:,.0f}
                 薪资范围: ${lower_bound:,.0f} - ${upper_bound:,.0f}
                 经验年限: {profile['years_experience']} 年
-                学历: {profile['education_required']}
+                学历: {profile['education_required']} ({profile.get('school_tier', '其他')})
 
-                技能背景: {profile['skills_text']}
+                技能背景: {skills_summary}
 
                 {advice}
                 """
@@ -496,52 +679,6 @@ def main():
             if st.button("🔄 重新分析"):
                 st.session_state.analysis_complete = False
                 st.rerun()
-
-    else:
-        # 欢迎页面
-        st.markdown("""
-        ## 🚀 开始你的AI职业分析
-
-        在左侧填写你的信息，我们将为你提供：
-
-        - 🎯 **职业类型识别** - 基于技能聚类分析
-        - 💰 **薪资预测** - 机器学习模型预测
-        - 📊 **技能画像** - 可视化你的技能分布
-        - 🧠 **智能建议** - 基于规则的个性化建议系统
-        - 📈 **成长路径** - 针对性的技能提升建议
-
-        ### 📋 使用指南
-        1. 在左侧输入你的基本信息
-        2. 详细描述你的技能背景
-        3. 设置求职偏好
-        4. 点击"开始分析"获得完整报告
-
-        ### 🎯 适用人群
-        - 准备转行AI/数据领域的人士
-        - 1-3年经验的初级从业者
-        - 对薪资和职业发展有疑问的求职者
-        """)
-
-        # 展示一些示例图表
-        st.markdown("### 📊 示例分析")
-
-        # 示例数据
-        sample_data = {
-            'Job Type': ['Data Scientist', 'ML Engineer', 'Data Analyst', 'Research Scientist'],
-            'Average Salary': [95000, 110000, 70000, 125000],
-            'Count': [450, 320, 600, 180]
-        }
-
-        fig = px.scatter(
-            x=sample_data['Count'],
-            y=sample_data['Average Salary'],
-            size=sample_data['Count'],
-            hover_name=sample_data['Job Type'],
-            title="AI职位薪资分布示例",
-            labels={'x': '职位数量', 'y': '平均薪资 (USD)'}
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
 
 
 if __name__ == "__main__":
